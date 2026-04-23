@@ -2,29 +2,32 @@ const express = require('express');
 const axios = require('axios');
 const app = express();
 
-// Middleware para transformar a URL
-app.get('*', async (req, res) => {
-    // Exemplo de URL: /ghost/ndj-lib/index.html
-    const pathParts = req.path.split('/').filter(Boolean);
-    const [user, repo, ...filePath] = pathParts;
-    const file = filePath.join('/') || 'index.html';
+// Função para mapear extensões para MIME Types
+const getMimeType = (file) => {
+    const ext = file.split('.').pop().toLowerCase();
+    const map = {
+        'html': 'text/html', 'css': 'text/css', 'js': 'application/javascript',
+        'json': 'application/json', 'png': 'image/png', 'jpg': 'image/jpeg',
+        'svg': 'image/svg+xml', 'txt': 'text/plain'
+    };
+    return map[ext] || 'text/plain';
+};
 
-    const githubApi = `https://api.github.com/repos/${user}/${repo}/contents/${file}`;
+app.get('/:user/:repo/*', async (req, res) => {
+    const { user, repo } = req.params;
+    const filePath = req.params[0] || 'index.html'; // Pega todo o resto da URL
+
+    const url = `https://raw.githubusercontent.com/${user}/${repo}/main/${filePath}`;
 
     try {
-        const response = await axios.get(githubApi, {
-            headers: { 'Accept': 'application/vnd.github.v3.raw' }
-        });
-
-        // Detecta o tipo de arquivo para o navegador renderizar certo
-        const ext = file.split('.').pop();
-        const mimeTypes = { 'html': 'text/html', 'css': 'text/css', 'js': 'application/javascript' };
+        const response = await axios.get(url, { responseType: 'arraybuffer' });
         
-        res.setHeader('Content-Type', mimeTypes[ext] || 'text/plain');
+        res.setHeader('Content-Type', getMimeType(filePath));
         res.send(response.data);
-    } catch (err) {
-        res.status(404).send('Repositório ou arquivo não encontrado.');
+    } catch (error) {
+        res.status(404).send('Arquivo não encontrado no repositório.');
     }
 });
 
-app.listen(3000, () => console.log('Render rodando na porta 3000'));
+const PORT = 3000;
+app.listen(PORT, () => console.log(`Gateway rodando em http://localhost:${PORT}`));
