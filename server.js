@@ -2,7 +2,6 @@ const express = require('express');
 const axios = require('axios');
 const app = express();
 
-// Função para mapear extensões para MIME Types
 const getMimeType = (file) => {
     const ext = file.split('.').pop().toLowerCase();
     const map = {
@@ -15,7 +14,7 @@ const getMimeType = (file) => {
 
 app.get('/:user/:repo/*', async (req, res) => {
     const { user, repo } = req.params;
-    const filePath = req.params[0] || 'index.html'; // Pega todo o resto da URL
+    const filePath = req.params[0] || 'index.html';
 
     const url = `https://raw.githubusercontent.com/${user}/${repo}/main/${filePath}`;
 
@@ -25,9 +24,10 @@ app.get('/:user/:repo/*', async (req, res) => {
         res.setHeader('Content-Type', getMimeType(filePath));
         res.send(response.data);
     } catch (error) {
-        res.status(404).send('Arquivo não encontrado no repositório.');
+        res.status(404).send('Arquivo não encontrado.');
     }
 });
 
-const PORT = 3000;
-app.listen(PORT, () => console.log(`Gateway rodando em http://localhost:${PORT}`));
+// A mudança crucial para rodar no Render/Cloud:
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, '0.0.0.0', () => console.log(`Gateway rodando na porta ${PORT}`));
