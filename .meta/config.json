@@ -1,6 +1,0 @@
-{
-  "domain": "webos.ghost",
-  "version": "1.0",
-  "entrypoint": "/public/index.html",
-  "assets_root": "/public/assets"
-}
